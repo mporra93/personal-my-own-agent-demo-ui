@@ -121,6 +121,13 @@
     }
     #btn-down:hover { box-shadow: 0 6px 28px rgba(245, 87, 108, 0.75); }
 
+    #btn-reset {
+      background: linear-gradient(135deg, #43cea2, #185a9d);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(67, 206, 162, 0.45);
+    }
+    #btn-reset:hover { box-shadow: 0 6px 28px rgba(67, 206, 162, 0.7); }
+
     /* ── Modal overlay ── */
     .modal-overlay {
       display: none;
@@ -238,6 +245,7 @@
     <div id="counter-display">0</div>
     <div class="btn-group">
       <button class="btn" id="btn-down" aria-label="Decrease">−</button>
+      <button class="btn" id="btn-reset" aria-label="Reset to zero">0</button>
       <button class="btn" id="btn-up"   aria-label="Increase">+</button>
     </div>
   </div>
@@ -289,6 +297,7 @@
 
     document.getElementById('btn-up').addEventListener('click', () => setCount(count + 1));
     document.getElementById('btn-down').addEventListener('click', () => setCount(count - 1));
+    document.getElementById('btn-reset').addEventListener('click', () => setCount(0));
 
     // ── Modal logic ────────────────────────────────────────────────
     const overlay    = document.getElementById('modal-overlay');
