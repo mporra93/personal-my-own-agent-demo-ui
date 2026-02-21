@@ -291,6 +291,7 @@
     document.getElementById('btn-down').addEventListener('click', () => setCount(count - 1));
 
     // ── Modal logic ────────────────────────────────────────────────
+    const REPO_URL    = 'https://github.com/mporra93/personal-my-own-agent-demo-ui';
     const overlay    = document.getElementById('modal-overlay');
     const promptEl   = document.getElementById('bug-prompt');
     const imageEl    = document.getElementById('bug-image');
@@ -318,11 +319,12 @@
     }
 
     // ── API call ───────────────────────────────────────────────────
-    // Replace with your actual bug-report API endpoint.
-    const BUG_REPORT_API = '/api/report-bug';
+    const BUG_REPORT_API = 'http://localhost:8000/fix';
 
     submitBtn.addEventListener('click', async () => {
+      const repo   = REPO_URL;
       const prompt = promptEl.value.trim();
+
       if (!prompt) {
         statusEl.textContent = 'Please describe the issue before submitting.';
         statusEl.className = 'error';
@@ -330,7 +332,8 @@
       }
 
       const formData = new FormData();
-      formData.append('prompt', prompt);
+      formData.append('repo_url', repo);
+      formData.append('bug_description', prompt);
       const file = imageEl.files[0];
       if (file) {
         const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -356,14 +359,25 @@
           let detail = `${response.status} ${response.statusText}`.trim();
           try {
             const body = await response.json();
-            if (body && body.message) detail = body.message;
+            if (body && body.detail) detail = body.detail;
           } catch (_) { /* ignore parse errors */ }
           throw new Error(detail);
         }
 
-        statusEl.textContent = '✓ Bug report submitted. Thank you!';
-        statusEl.className = '';
-        setTimeout(closeModal, 1800);
+        const result = await response.json();
+        if (result.status === 'no_changes') {
+          statusEl.textContent = '⚠ Agent ran but found no changes to make. Try a more specific prompt.';
+          statusEl.className = 'error';
+          submitBtn.disabled = false;
+        } else if (result.pr_url) {
+          statusEl.innerHTML = `✓ PR created! <a href="${result.pr_url}" target="_blank" style="color:#8ec5fc;">${result.pr_url}</a>`;
+          statusEl.className = '';
+          setTimeout(closeModal, 4000);
+        } else {
+          statusEl.textContent = '✓ Submitted successfully!';
+          statusEl.className = '';
+          setTimeout(closeModal, 1800);
+        }
       } catch (err) {
         statusEl.textContent = `Error: ${err.message}`;
         statusEl.className = 'error';
