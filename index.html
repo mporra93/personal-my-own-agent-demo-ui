@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Counter App</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #e0e0e0;
+    }
+
+    /* ── Report-bug button (top-right) ── */
+    #report-bug-btn {
+      position: fixed;
+      top: 1.2rem;
+      right: 1.4rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #e0e0e0;
+      border-radius: 50%;
+      width: 2.8rem;
+      height: 2.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.15s;
+      backdrop-filter: blur(6px);
+    }
+    #report-bug-btn:hover {
+      background: rgba(255, 80, 80, 0.25);
+      border-color: rgba(255, 100, 100, 0.5);
+      transform: scale(1.1);
+    }
+    #report-bug-btn svg {
+      width: 1.3rem;
+      height: 1.3rem;
+      fill: currentColor;
+      pointer-events: none;
+    }
+
+    /* ── Counter card ── */
+    .card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 1.5rem;
+      padding: 3rem 4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.4rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    #counter-display {
+      font-size: 6rem;
+      font-weight: 700;
+      line-height: 1;
+      background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      min-width: 4ch;
+      text-align: center;
+      transition: transform 0.12s ease;
+    }
+    #counter-display.bump {
+      transform: scale(1.15);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 1.2rem;
+    }
+
+    .btn {
+      width: 4rem;
+      height: 4rem;
+      border-radius: 50%;
+      border: none;
+      font-size: 2rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn:active { transform: scale(0.92); }
+
+    #btn-up {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+    }
+    #btn-up:hover { box-shadow: 0 6px 28px rgba(102, 126, 234, 0.75); }
+
+    #btn-down {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(245, 87, 108, 0.5);
+    }
+    #btn-down:hover { box-shadow: 0 6px 28px rgba(245, 87, 108, 0.75); }
+
+    /* ── Modal overlay ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #1e2140;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 1.2rem;
+      padding: 2rem 2.4rem;
+      width: min(90vw, 420px);
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .modal label {
+      font-size: 0.82rem;
+      color: rgba(255, 255, 255, 0.55);
+      margin-bottom: 0.3rem;
+      display: block;
+    }
+
+    .modal textarea,
+    .modal input[type="file"] {
+      width: 100%;
+      border-radius: 0.6rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: #e0e0e0;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .modal textarea:focus,
+    .modal input[type="file"]:focus {
+      border-color: #667eea;
+    }
+    .modal textarea { resize: vertical; min-height: 90px; }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: flex-end;
+      margin-top: 0.4rem;
+    }
+
+    .modal-actions button {
+      padding: 0.55rem 1.3rem;
+      border-radius: 0.55rem;
+      border: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s, transform 0.12s;
+    }
+    .modal-actions button:active { transform: scale(0.95); }
+
+    #cancel-btn {
+      background: rgba(255, 255, 255, 0.08);
+      color: #c0c0c0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    #cancel-btn:hover { background: rgba(255, 255, 255, 0.14); }
+
+    #submit-btn {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(102, 126, 234, 0.45);
+    }
+    #submit-btn:hover { opacity: 0.9; }
+    #submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    #form-status {
+      font-size: 0.82rem;
+      min-height: 1.1em;
+      color: #7dd87d;
+    }
+    #form-status.error { color: #f5576c; }
+  </style>
+</head>
+<body>
+
+  <!-- Report Bug button (top-right) -->
+  <button id="report-bug-btn" title="Report a bug" aria-label="Report a bug">
+    <!-- Bug / ladybug icon -->
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 8h-2.81A5.985 5.985 0 0 0 14 5.08V4a2 2 0 1 0-4 0v1.08A5.985 5.985 0 0 0 6.81 8H4a1 1 0 0 0 0 2h2.09A6.085 6.085 0 0 0 6 11v1H4a1 1 0 0 0 0 2h2v1a6.085 6.085 0 0 0 .09 1H4a1 1 0 0 0 0 2h2.81A6 6 0 0 0 18 18v-1h2a1 1 0 0 0 0-2h-2v-1h2a1 1 0 0 0 0-2h-2v-1a6.085 6.085 0 0 0-.09-1H20a1 1 0 0 0 0-2zm-8 8a4 4 0 0 1-4-4v-1a4 4 0 0 1 8 0v1a4 4 0 0 1-4 4zm0-10a2.015 2.015 0 0 1 1.737 1H10.26A2.015 2.015 0 0 1 12 6z"/>
+    </svg>
+  </button>
+
+  <!-- Counter card -->
+  <div class="card">
+    <h1>Counter</h1>
+    <div id="counter-display">0</div>
+    <div class="btn-group">
+      <button class="btn" id="btn-down" aria-label="Decrease">−</button>
+      <button class="btn" id="btn-up"   aria-label="Increase">+</button>
+    </div>
+  </div>
+
+  <!-- Report Bug modal -->
+  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <h2 id="modal-title">
+        <!-- small bug icon inline -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20 8h-2.81A5.985 5.985 0 0 0 14 5.08V4a2 2 0 1 0-4 0v1.08A5.985 5.985 0 0 0 6.81 8H4a1 1 0 0 0 0 2h2.09A6.085 6.085 0 0 0 6 11v1H4a1 1 0 0 0 0 2h2v1a6.085 6.085 0 0 0 .09 1H4a1 1 0 0 0 0 2h2.81A6 6 0 0 0 18 18v-1h2a1 1 0 0 0 0-2h-2v-1h2a1 1 0 0 0 0-2h-2v-1a6.085 6.085 0 0 0-.09-1H20a1 1 0 0 0 0-2zm-8 8a4 4 0 0 1-4-4v-1a4 4 0 0 1 8 0v1a4 4 0 0 1-4 4zm0-10a2.015 2.015 0 0 1 1.737 1H10.26A2.015 2.015 0 0 1 12 6z"/>
+        </svg>
+        Report a Bug
+      </h2>
+
+      <div>
+        <label for="bug-prompt">Describe the issue</label>
+        <textarea id="bug-prompt" placeholder="What went wrong? Steps to reproduce…" required></textarea>
+      </div>
+
+      <div>
+        <label for="bug-image">Attach a screenshot (optional)</label>
+        <input type="file" id="bug-image" accept="image/*" />
+      </div>
+
+      <div id="form-status"></div>
+
+      <div class="modal-actions">
+        <button id="cancel-btn" type="button">Cancel</button>
+        <button id="submit-btn" type="button">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Counter logic ──────────────────────────────────────────────
+    let count = 0;
+    const display = document.getElementById('counter-display');
+
+    function setCount(n) {
+      count = n;
+      display.textContent = count;
+      display.classList.remove('bump');
+      // force reflow so the animation restarts
+      void display.offsetWidth;
+      display.classList.add('bump');
+      setTimeout(() => display.classList.remove('bump'), 120);
+    }
+
+    document.getElementById('btn-up').addEventListener('click', () => setCount(count + 1));
+    document.getElementById('btn-down').addEventListener('click', () => setCount(count - 1));
+
+    // ── Modal logic ────────────────────────────────────────────────
+    const overlay    = document.getElementById('modal-overlay');
+    const promptEl   = document.getElementById('bug-prompt');
+    const imageEl    = document.getElementById('bug-image');
+    const submitBtn  = document.getElementById('submit-btn');
+    const cancelBtn  = document.getElementById('cancel-btn');
+    const statusEl   = document.getElementById('form-status');
+
+    document.getElementById('report-bug-btn').addEventListener('click', openModal);
+    cancelBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal(); });
+
+    function openModal() {
+      promptEl.value = '';
+      imageEl.value  = '';
+      statusEl.textContent = '';
+      statusEl.className = '';
+      submitBtn.disabled = false;
+      overlay.classList.add('open');
+      promptEl.focus();
+    }
+
+    function closeModal() {
+      overlay.classList.remove('open');
+    }
+
+    // ── API call ───────────────────────────────────────────────────
+    // Replace with your actual bug-report API endpoint.
+    const BUG_REPORT_API = '/api/report-bug';
+
+    submitBtn.addEventListener('click', async () => {
+      const prompt = promptEl.value.trim();
+      if (!prompt) {
+        statusEl.textContent = 'Please describe the issue before submitting.';
+        statusEl.className = 'error';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      const file = imageEl.files[0];
+      if (file) {
+        const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+        if (file.size > MAX_SIZE) {
+          statusEl.textContent = 'Image must be smaller than 5 MB.';
+          statusEl.className = 'error';
+          return;
+        }
+        formData.append('image', file, file.name);
+      }
+
+      submitBtn.disabled = true;
+      statusEl.className = '';
+      statusEl.textContent = 'Submitting…';
+
+      try {
+        const response = await fetch(BUG_REPORT_API, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          let detail = `${response.status} ${response.statusText}`.trim();
+          try {
+            const body = await response.json();
+            if (body && body.message) detail = body.message;
+          } catch (_) { /* ignore parse errors */ }
+          throw new Error(detail);
+        }
+
+        statusEl.textContent = '✓ Bug report submitted. Thank you!';
+        statusEl.className = '';
+        setTimeout(closeModal, 1800);
+      } catch (err) {
+        statusEl.textContent = `Error: ${err.message}`;
+        statusEl.className = 'error';
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
